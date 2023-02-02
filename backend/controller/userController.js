@@ -1,6 +1,8 @@
 const ErrorHandler = require("../utils/errorHandler");
-const catchAsyncError = require("../middleware/catchAsyncError");
 const sendToken = require("../utils/jwtToken");
+const sendEmail = require("../utils/sendEmail");
+const catchAsyncError = require("../middleware/catchAsyncError");
+const crypto = require("crypto");
 
 const User = require("../models/userModel");
 const Admin = require("../models/adminModel");
@@ -139,3 +141,94 @@ exports.logOutAdmin = catchAsyncError(async (req, res, next) => {
         message: "logged out successfully"
     })
 })
+
+// 🔥 forgot password
+exports.forgotPassword = (option) =>{
+
+    return catchAsyncError((async(req,res,next)=>{
+
+        const email = req.body.email;
+        let user;
+        if(option === "user"){
+            user = await User.findOne({email});
+        }
+        else{
+            user = await Admin.findOne({email});
+        }
+    
+        // const user = await option.findOne({email});
+    
+        if(!user){
+            return next(new ErrorHandler("User not found !!",404));
+        }
+    
+        const resetToken = user.getResetPasswordToken();
+    
+        await user.save({validateBeforeSave: false});
+    
+        const resetPasswordUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetToken}`;
+        const message = `Your password reset url is :- \n\n ${resetPasswordUrl} \n\n If you have not requested this email then, please ignore it...`;
+    
+        try{
+            await sendEmail({
+                email: user.email,
+                subject : `Hostel mangement system password recovery`,
+                message : message,
+    
+            });
+    
+            res.status(200).json({
+                success:true,
+                message : `Email successfully sent to ${user.email}`,
+            })
+        }
+        catch(err){
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+    
+            user.save({validateBeforeSave : false});
+    
+            return next(new ErrorHandler(err.message,500));
+        }
+    })
+    )
+}
+
+
+// 🔥 reset password
+exports.resetPassword = (option)=>{
+    return catchAsyncError(async(req,res,next)=>{
+        let user;
+        console.log(req.params.token);
+        const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+
+        if(option === "user"){
+            user = await User.findOne({
+                resetPasswordToken,
+                resetPasswordExpire:{$gt : Date.now()},
+            })
+        }
+        else{
+            user = await Admin.findOne({
+                resetPasswordToken,
+                resetPasswordExpire:{$gt : Date.now()},
+            })
+        }
+
+        if(!user){
+            return next(new ErrorHandler("Reset token is invalid or expired",400));
+        }
+        if(req.body.password !== req.body.confirmPassword){
+            return next(new ErrorHandler("Reset token is invalidd or expired",400));
+        }
+
+        user.password = req.body.password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save({validateBeforeSave:false});
+
+        sendToken(user,200,res);
+    })
+}
+
