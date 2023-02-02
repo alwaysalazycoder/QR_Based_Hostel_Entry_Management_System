@@ -80,8 +80,9 @@ userSchema.pre("save",async function(next){
 
 // JWT token
 userSchema.methods.getJWTToken = function(){
-    return jwt.sign({id:this._id},process.env.JWT_SECRET,{
-        expiresIn:process.env.JWT_EXPIRE,
+  
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { // here we are making the token using the id as payload
+        expiresIn: process.env.JWT_EXPIRE,
     })
 }
 

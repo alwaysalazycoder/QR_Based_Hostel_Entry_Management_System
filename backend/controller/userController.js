@@ -33,19 +33,12 @@ exports.registerUser = catchAsyncError(async (req, res, next) => {
 
     });
 
-
-    const token = user.getJWTToken();
-
-    res.status(201).json({
-        success: true,
-        token,
-        user,
-    })
+    sendToken(user, 200, res);
 });
 
 // 🔥 Login User
 exports.loginUser = catchAsyncError(async (req, res, next) => {
-    
+
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -71,7 +64,7 @@ exports.loginUser = catchAsyncError(async (req, res, next) => {
 
 // 🔥 logout user
 exports.logOut = catchAsyncError(async (req, res, next) => {
-    
+
     res.cookie('token', null, {
         expiresIn: new Date(Date.now()),
         httpOnly: true,
@@ -83,6 +76,65 @@ exports.logOut = catchAsyncError(async (req, res, next) => {
     })
 })
 
+// 🔥 get user details...
+exports.getUserDetails = catchAsyncError(async (req, res, next) => {
+    const id = req.user.id;
+    const user = await User.findById(id);
+
+    res.status(200).json({
+        success: true,
+        user,
+    })
+})
+
+// 🔥 update user data or details
+exports.updateUser = catchAsyncError(async (req, res, next) => {
+
+    const { enrollment_no } = req.body;
+    const { name, room_no } = req.body;
+
+    const user = await User.findOne({ enrollment_no });
+
+    user.name = name;
+    user.room_no = room_no;
+
+    user.save({ validateBeforeSave: false })
+
+    res.status(200).json({
+        success: true,
+        user,
+        name, email
+
+    })
+})
+
+// 🔥 get all users -- Admin
+exports.getAllUsers = catchAsyncError(async (req, res, next) => {
+
+    const users = await User.find({});
+
+    res.status(200).json({
+        success: true,
+        users
+    })
+})
+
+// 🔥 delete user
+exports.deleteUser = catchAsyncError(async (req, res, next) => {
+    const { enrollment_no } = req.body;
+    const user = await User.findOneAndDelete({ enrollment_no });
+
+    if (!user) {
+        next(new ErrorHandler("User with given id doesnot exist", 404))
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "user delete successfully ",
+        user,
+    })
+})
+
 
 
 
@@ -90,7 +142,7 @@ exports.logOut = catchAsyncError(async (req, res, next) => {
 
 // 🔥 Register Admin
 exports.registerAdmin = catchAsyncError(async (req, res, next) => {
-    
+
     const { name, email, password, role } = req.body;
 
     const admin = await Admin.create({
@@ -107,7 +159,7 @@ exports.registerAdmin = catchAsyncError(async (req, res, next) => {
 
 // 🔥 Login Admin
 exports.loginAdmin = catchAsyncError(async (req, res, next) => {
-    
+
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -130,7 +182,7 @@ exports.loginAdmin = catchAsyncError(async (req, res, next) => {
 
 // 🔥 logout Admin
 exports.logOutAdmin = catchAsyncError(async (req, res, next) => {
-    
+
     res.cookie('token', null, {
         expiresIn: new Date(Date.now()),
         httpOnly: true,
@@ -142,93 +194,95 @@ exports.logOutAdmin = catchAsyncError(async (req, res, next) => {
     })
 })
 
-// 🔥 forgot password
-exports.forgotPassword = (option) =>{
 
-    return catchAsyncError((async(req,res,next)=>{
+
+
+// 🔥 forgot password
+exports.forgotPassword = (option) => {
+
+    return catchAsyncError((async (req, res, next) => {
 
         const email = req.body.email;
         let user;
-        if(option === "user"){
-            user = await User.findOne({email});
+        if (option === "user") {
+            user = await User.findOne({ email });
         }
-        else{
-            user = await Admin.findOne({email});
+        else {
+            user = await Admin.findOne({ email });
         }
-    
+
         // const user = await option.findOne({email});
-    
-        if(!user){
-            return next(new ErrorHandler("User not found !!",404));
+
+        if (!user) {
+            return next(new ErrorHandler("User not found !!", 404));
         }
-    
+
         const resetToken = user.getResetPasswordToken();
-    
-        await user.save({validateBeforeSave: false});
-    
+
+        await user.save({ validateBeforeSave: false });
+
         const resetPasswordUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetToken}`;
         const message = `Your password reset url is :- \n\n ${resetPasswordUrl} \n\n If you have not requested this email then, please ignore it...`;
-    
-        try{
+
+        try {
             await sendEmail({
                 email: user.email,
-                subject : `Hostel mangement system password recovery`,
-                message : message,
-    
+                subject: `Hostel mangement system password recovery`,
+                message: message,
+
             });
-    
+
             res.status(200).json({
-                success:true,
-                message : `Email successfully sent to ${user.email}`,
+                success: true,
+                message: `Email successfully sent to ${user.email}`,
             })
         }
-        catch(err){
+        catch (err) {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
-    
-            user.save({validateBeforeSave : false});
-    
-            return next(new ErrorHandler(err.message,500));
+
+            user.save({ validateBeforeSave: false });
+
+            return next(new ErrorHandler(err.message, 500));
         }
     })
     )
 }
 
-
 // 🔥 reset password
-exports.resetPassword = (option)=>{
-    return catchAsyncError(async(req,res,next)=>{
+exports.resetPassword = (option) => {
+    return catchAsyncError(async (req, res, next) => {
         let user;
         console.log(req.params.token);
         const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
 
-        if(option === "user"){
+        if (option === "user") {
             user = await User.findOne({
                 resetPasswordToken,
-                resetPasswordExpire:{$gt : Date.now()},
+                resetPasswordExpire: { $gt: Date.now() },
             })
         }
-        else{
+        else {
             user = await Admin.findOne({
                 resetPasswordToken,
-                resetPasswordExpire:{$gt : Date.now()},
+                resetPasswordExpire: { $gt: Date.now() },
             })
         }
 
-        if(!user){
-            return next(new ErrorHandler("Reset token is invalid or expired",400));
+        if (!user) {
+            return next(new ErrorHandler("Reset token is invalid or expired", 400));
         }
-        if(req.body.password !== req.body.confirmPassword){
-            return next(new ErrorHandler("Reset token is invalidd or expired",400));
+        if (req.body.password !== req.body.confirmPassword) {
+            return next(new ErrorHandler("Reset token is invalidd or expired", 400));
         }
 
         user.password = req.body.password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
-        await user.save({validateBeforeSave:false});
+        await user.save({ validateBeforeSave: false });
 
-        sendToken(user,200,res);
+        sendToken(user, 200, res);
     })
 }
 

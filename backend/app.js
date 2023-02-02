@@ -7,6 +7,7 @@ const cors = require("cors");
 
 // middlewares
 app.use(express.json());
+app.use(cookieParser()); // for parsing cookies..
 app.use(errorMiddleware);
 app.use(
   cors({
