@@ -18,8 +18,10 @@ app.use(
 
 //Route Imports
 const users = require("./routes/userRoutes");
+const entries = require('./routes/entryRoutes');
 
 // api call
 app.use("/api/v1", users);
+app.use("/api/v1",entries);
 
 module.exports = app;

@@ -51,7 +51,10 @@ const userSchema = new mongoose.Schema({
             require: true,
         },
     },
-
+    phoneNo : {
+        type : Number,
+        required : true,
+    },
     profile : {
         public_id : {
             type : String,

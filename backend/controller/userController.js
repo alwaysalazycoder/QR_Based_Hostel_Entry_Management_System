@@ -13,7 +13,7 @@ const Admin = require("../models/adminModel");
 // 🔥 Register user
 exports.registerUser = catchAsyncError(async (req, res, next) => {
 
-    const { name, email, password, enrollment_no, room_no, floor } = req.body;
+    const { name, email, password, enrollment_no, room_no, floor ,phoneNo} = req.body;
 
     const user = await User.create({
         name,
@@ -29,7 +29,7 @@ exports.registerUser = catchAsyncError(async (req, res, next) => {
         ID_card: {
             public_id: "sample_id",
             url: "sample_url"
-        }
+        },phoneNo,
 
     });
 
@@ -91,19 +91,21 @@ exports.getUserDetails = catchAsyncError(async (req, res, next) => {
 exports.updateUser = catchAsyncError(async (req, res, next) => {
 
     const { enrollment_no } = req.body;
-    const { name, room_no } = req.body;
+    const { name, room_no,phoneNo } = req.body;
 
     const user = await User.findOne({ enrollment_no });
 
     user.name = name;
     user.room_no = room_no;
+    user.phoneNo = phoneNo;
 
     user.save({ validateBeforeSave: false })
 
     res.status(200).json({
         success: true,
         user,
-        name, email
+        name, email,
+        phoneNo,
 
     })
 })
