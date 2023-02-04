@@ -15,5 +15,12 @@ const connectDatabase = () => {
 
 mongoose.set('strictQuery', false);
 
+const cxn = mongoose.connection
+
+cxn
+.on("open", () => console.log("mongoose is connected"))
+.on("close", () => console.log("mongoose is disconnected"))
+.on("error", (error) => console.log(error))
+
 
 module.exports = connectDatabase;
