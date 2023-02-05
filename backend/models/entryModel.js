@@ -31,10 +31,10 @@ const entrySchema = new mongoose.Schema({
     },
 
 
-    // displayDate: {
-    //     type: String,
-    //     default: new Date().toDateString() 
-    // },
+    displayDate: {
+        type: String,
+        default: new Date().toDateString() 
+    },
 
     // time: {
     //     type: String,
