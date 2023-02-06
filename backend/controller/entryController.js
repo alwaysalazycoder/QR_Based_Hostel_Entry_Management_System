@@ -72,7 +72,8 @@ exports.createEntry = catchAsyncError(async (req, res, next) => {
 
 exports.getAllEntry = catchAsyncError(async (req, res, next) => {
 
-    const apiFeature = new ApiFeatures(Entry, req.query).search();
+    const resultPerPage = 5;
+    const apiFeature = new ApiFeatures(Entry, req.query).search().filter().pagination(resultPerPage);
 
     const entry = await apiFeature.query;
 

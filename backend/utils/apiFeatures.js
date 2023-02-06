@@ -23,6 +23,28 @@ class ApiFeatures {
         return this;
     }
 
+    filter(){
+        const queryCopy = {...this.queryStr}; 
+        
+        // Remove some field for category.. 
+        const removeFields = ["keyword","page","limit","enrollment_no"];
+        removeFields.forEach(key => {
+            delete queryCopy[key]
+        });
+        console.log(queryCopy); 
+
+    }
+
+    pagination(resultPerPage){ 
+
+        const currentPage = Number(this.queryStr.page )|| 1; 
+
+        const skip = (resultPerPage * (currentPage-1));
+
+        this.query = this.query.limit(resultPerPage).skip(skip);
+        return this;
+    }
+
 
 }
 
