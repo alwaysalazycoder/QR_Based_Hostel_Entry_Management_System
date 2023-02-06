@@ -5,15 +5,9 @@ class ApiFeatures {
     }
 
     search() {
-        let keyword = {};
-        keyword = this.queryStr.keyword ? {
-            name: {
-                $regex: this.queryStr.keyword,
-                $options: "i",
-            },
-            enrollment_no: Number(this.queryStr.enroll),
-        } : {}
 
+        let keyword = {};
+        
         keyword = this.queryStr.keyword ? {
             name: {
                 $regex: this.queryStr.keyword,
@@ -25,7 +19,7 @@ class ApiFeatures {
             keyword.enrollment_no = Number(this.queryStr.enroll);
         }
 
-        this.query = this.query.find({ ...keyword });
+        this.query = this.query.find({...keyword});
         return this;
     }
 
