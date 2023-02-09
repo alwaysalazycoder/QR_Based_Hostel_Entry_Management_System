@@ -31,7 +31,18 @@ class ApiFeatures {
         removeFields.forEach(key => {
             delete queryCopy[key]
         });
-        console.log(queryCopy); 
+
+        let filterProperty = {};
+
+        if(queryCopy.status){
+            filterProperty.status = queryCopy.status;
+        }
+        if(queryCopy.floor){
+            filterProperty.floor = queryCopy.floor;
+        }
+       
+        this.query = this.query.find({...filterProperty});
+        return this;
 
     }
 

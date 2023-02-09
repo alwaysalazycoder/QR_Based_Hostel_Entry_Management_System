@@ -9,7 +9,9 @@ exports.createEntry = catchAsyncError(async (req, res, next) => {
 
     if (existingEntry.length > 0) {
 
-        const entry = await Entry.findOneAndUpdate({ enrollment_no: req.user.enrollment_no,inEntry : false }, { inEntry: true });
+        const updateentry = await Entry.findOneAndUpdate({ enrollment_no: req.user.enrollment_no,inEntry : false }, { inEntry: true ,status : "completed"});
+
+        const entry = await Entry.findById(updateentry._id);
 
         res.status(200).json({
             success: true,
@@ -31,8 +33,6 @@ exports.createEntry = catchAsyncError(async (req, res, next) => {
             next();
         }
         else {
-
-
 
             const entry = await Entry.create({
                 inEntry,

@@ -24,22 +24,15 @@ const entrySchema = new mongoose.Schema({
         type: String,
     },
 
-    
     Date: {
         type: Date,
         default: new Date()
     },
 
-
-    displayDate: {
-        type: String,
-        default: new Date().toDateString() 
+    status : {
+        type : String,
+        default : "pending",
     },
-
-    // time: {
-    //     type: String,
-    //     default: new Date().toTimeString().split(" ")[0]
-    // },
 
     name: String,
     email: String,
